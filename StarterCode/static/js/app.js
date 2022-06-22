@@ -15,7 +15,7 @@ d3.json("samples.json").then((data) => {
     // console.log(data.names)
     let dropdown = d3.select("#selDataset")
 
-    data.names.array.forEach((id) => {
+    data.names.forEach((id) => {
         // console.log(id)
 
 
