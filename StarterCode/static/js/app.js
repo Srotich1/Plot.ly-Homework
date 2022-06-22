@@ -10,7 +10,7 @@ function BuildCharts(selected){
 
 
 
-d3.jason("samples.json").then((data) => {
+d3.json("samples.json").then((data) => {
 
     // console.log(data.names)
     let dropdown = d3.select("#selDataset")
