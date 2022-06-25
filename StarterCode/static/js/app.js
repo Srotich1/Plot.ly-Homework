@@ -13,9 +13,9 @@ function init() {
       });
   
       // Use the first sample from the list to build the initial plots
-      var firstSample = datanames[0];
-      buildCharts(firstSample);
-      buildMetadata(firstSample);
+      var selected_Sample = datanames[0];
+      buildCharts(selected_Sample);
+      buildMetadata(selected_Sample);
     });
   }
  // -------------------Start the dashboard------------------------//
@@ -23,9 +23,9 @@ function init() {
 
 init();
 
-function optionChanged(newSample) {
-  buildMetadata(newSample);
-  buildCharts(newSample);
+function optionChanged(selected) {
+  buildMetadata(selected);
+  buildCharts(selected);
   
 }
 
