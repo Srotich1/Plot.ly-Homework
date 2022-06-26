@@ -1,92 +1,87 @@
-// create a path to pull the reference dataset to dropdown
+// create a path to pull the main reference dataset to dropdown
+// Use the D3 library to read in samples.json
 function init() {
-    // Grab a reference to the dropdown select element
+
     var dropdown = d3.select("#selDataset");
-  
-    // Use the list of sample names to populate the select options
+
     d3.json("samples.json").then((data) => {
-  
       var datanames = data.names;
-  
       datanames.forEach((sample) => {
         dropdown.append("option").text(sample).property("value", sample);
       });
   
-      // Use the first sample from the list to build the initial plots
+      // Build  Chartplots
       var selected_Sample = datanames[0];
       buildCharts(selected_Sample);
       buildMetadata(selected_Sample);
     });
   }
- // -------------------Start the dashboard------------------------//
-//  Enable an option to fetch new data when different sample id's selected //
-
+//  Enable an option to pull unique data with new selection //
 init();
 
 function optionChanged(selected) {
   buildMetadata(selected);
-  buildCharts(selected);
-  
-}
+  buildCharts(selected); 
 
-// Demographics Panel 
+}
+//----------- Demographics Panel--------------//
+//  Display the sample metadata, i.e., an individual's demographic information
+// Display each key-value pair from the metadata JSON object 
+ // Filter the data for the object with the desired unique sample id.
+ // then enable the selected pull the meta_panel with id of `#sample-metadata` 
 function buildMetadata(sample) {
   d3.json("samples.json").then((data) => {
     var metadata = data.metadata;
-    // Filter the data for the object with the desired sample number
-    var resultArray = metadata.filter(sampleObj => sampleObj.id == sample);
-    var result = resultArray[0];
-    // Use d3 to select the panel with id of `#sample-metadata`
-    var PANEL = d3.select("#sample-metadata");
+    var obj_result = metadata.filter(sampleObj => sampleObj.id == sample);
+    var result = obj_result[0];
+    var meta_panel = d3.select("#sample-metadata");
 
-    // Use `.html("") to clear any existing metadata
-    PANEL.html("");
+    // Update all of the plots any time that a new sample is selected.
+    // by reseting any existing metadata
+    meta_panel.html("");
 
     // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
+
     Object.entries(result).forEach(([key, value]) => {
-      PANEL.append("h6").text(`${key.toUpperCase()}: ${value}`);
+        meta_panel.append("h6").text(`${key.toUpperCase()}: ${value}`);
     });
 
   });
 }
 
-// Create the buildCharts function.
+// ------------buildCharts---------------------------//
+// Use d3.json to load and retrieve the samples.json file 
+
 function buildCharts(sample) {
-  // Use d3.json to load and retrieve the samples.json file 
+  
   d3.json("samples.json").then((data) => {
-    console.log(data);
-    // Create a variable that holds the samples array. 
+    // console.log(data);
     var samples = data.samples;
-    // Create a variable that filters the samples for the object with the desired sample number.
-    var resultsArray = samples.filter(obj => obj.id == sample);
-    // Create a variable that holds the first sample in the array.
-    var result = resultsArray[0];
+    var obj_results = samples.filter(obj => obj.id == sample);
+    var result = obj_results[0];
+
     // Create variables that hold the otu_ids, otu_labels, and sample_values.
     var otuIDs = result.otu_ids;
     var otuLabs = result.otu_labels;
     var sampleVals = result.sample_values; 
-    // Create a variable that filters the metadata array 
+    // filters the metadata
     var metadata = data.metadata;
-    var metadataArray = metadata.filter(sampleObj => sampleObj.id == sample);
-    // Create a variable that holds the first sample in the metadata array
-    var metaResult = metadataArray[0];
+    var obj_metadata = metadata.filter(sampleObj => sampleObj.id == sample);
+
+    var metaResult = obj_metadata[0];
     // Create a variable that holds the washing frequency
     var washingFreq = parseInt(metaResult.wfreq);
 
     
   
   
-    // Create the yticks for the bar chart.
-    // Hint: Get the the top 10 otu_ids and map them in descending order  
-    //  so the otu_ids with the most bacteria are last. 
-
+    // Use sample_values as the values for the bar chart.
+    // Use otu_ids as the labels for the bar chart.
+    // Use otu_labels as the hovertext for the chart.
     var yticks = otuIDs.slice(0,10).reverse().map(function (elem) {return `OTU ${elem}`});
     var xticks = sampleVals.slice(0,10).reverse();
     var labels = otuLabs.slice(0,10).reverse();
 
-    // Create the trace for the bar chart. 
     var barData = {
       x: xticks,
       y: yticks,
@@ -94,7 +89,7 @@ function buildCharts(sample) {
       orientation: 'h',
       text: labels
     };
-    // Create the layout for the bar chart. 
+    // layout for the bar chart. 
     var barLayout = {
      title: "Top 10 Bacteria Cultures Found",
     };
@@ -102,6 +97,12 @@ function buildCharts(sample) {
     Plotly.newPlot("bar", [barData], barLayout);
 
     // Create the trace for the bubble chart.
+    // Create a bubble chart that displays each sample.
+    // Use otu_ids for the x values.
+    // Use sample_values for the y values.
+    // Use sample_values for the marker size.
+    // Use otu_ids for the marker colors.
+    // Use otu_labels for the text values.
     var bubbleData = {
       x: otuIDs,
       y: sampleVals,
@@ -113,7 +114,6 @@ function buildCharts(sample) {
       }
     };
     
-    // Create the layout for the bubble chart.
     var bubbleLayout = {
       title: "Bacteria Cultures Per Sample",
       xaxis: {title: "OTU ID"},
@@ -123,27 +123,26 @@ function buildCharts(sample) {
     // Use Plotly to plot the data with the layout.
     Plotly.newPlot("bubble", [bubbleData], bubbleLayout);   
 
-
     // Gauge chart
     var gaugeData = {
       value: washingFreq,
-      title: {text: "Belly Button Washing Frequency<br>Scrubs per Week"},
+      title: {text:"Belly Button Washing Frequency<br>Scrubs per Week"},
       type: "indicator",
       mode: "gauge+number",
       gauge: {
         axis: {range: [0,10]},
         steps: [
-          {range: [0,2], color:"#ea2c2c"},
-          {range: [2,4], color:"#ea822c"},
-          {range: [4,6], color:"#ee9c00"},
-          {range: [6,8], color:"#eecc00"},
-          {range: [8,10], color:"#d4ee00"}
+          {range: [0,2], color:"#e2f7c1"},
+          {range: [2,4], color:"#d0f7c1"},
+          {range: [4,6], color:"#8fab32"},
+          {range: [6,8], color:"#3ded1a"},
+          {range: [8,10], color:"#0d8c28"}
         ]
       }
     };
 
     var gaugeLayout = {
-      width: 600, height: 450, margin: {t: 0, b: 0}
+      width: 500, height: 350, margin: {t: 0, b: 0}
     };
 
     Plotly.newPlot("gauge", [gaugeData], gaugeLayout);
@@ -151,4 +150,4 @@ function buildCharts(sample) {
   });
  };
 
-// plot.ly hw challenge completed  by Solomon Rotich......//
+// ....................plot.ly challenge Solomon Rotich June 2022.....................................//
